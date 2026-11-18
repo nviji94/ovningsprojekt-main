@@ -17,7 +17,11 @@ const filer = new Set(poster
   .filter((c) => c.name === "Edit" || c.name === "Write")
   .map((c) => "- " + c.input.file_path));
 
-const nr = readdirSync("sessions").length + 1;
+const nummer = readdirSync("sessions")
+  .map((f) => f.match(/^pass-(\d+)\.md$/))
+  .filter(Boolean)
+  .map((m) => Number(m[1]));
+const nr = nummer.length ? Math.max(...nummer) + 1 : 1;
 const text = ["# Pass " + nr, "## Du bad om", ...bad,
   "## Ändrade filer", ...filer].join("\n");
 writeFileSync(`sessions/pass-${nr}.md`, text);

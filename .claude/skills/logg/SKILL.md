@@ -5,7 +5,7 @@ description: Skriver sessionslogg i sessions/ med mål, gjort, bevis, förbrukni
 
 Skriv en sessionslogg för det här arbetspasset: $ARGUMENTS
 
-1. Lista filerna i sessions/ och välj nästa nummer: pass-N.md, där N är antalet befintliga pass-*.md-filer plus ett. Räkna bara filer som heter pass-*.md.
+1. Lista filerna i sessions/ och välj nästa nummer: pass-N.md, där N är det högsta befintliga numret i sessions/pass-*.md plus ett. Räkna bara filer som heter pass-*.md.
 2. Kör `git log --oneline -5` och `git status` för att se vad som committats och vad som väntar.
 3. Skriv filen med dessa rubriker:
    - Mål: vad passet skulle uppnå, med hänvisning till docs/plan.md.
