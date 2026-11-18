@@ -82,20 +82,34 @@ export async function getOrder(orderId: number, customerId: number): Promise<Res
   return ok({ ...order, lines: lines.rows });
 }
 
+// Själva UPDATE:n. Ägare, status och tid kontrolleras i samma villkor, så att två avbrott
+// inte kan lyckas samtidigt och en kund inte kan avbryta någon annans beställning.
+// Returnerar antalet uppdaterade rader (0 eller 1).
+export async function markCancelled(orderId: number, customerId: number): Promise<number> {
+  const res = await db.query(
+    `UPDATE orders SET status = 'cancelled'
+      WHERE id = $1 AND customer_id = $2 AND status = 'new' AND created_at >= now() - interval '30 minutes'
+      RETURNING id`,
+    [orderId, customerId],
+  );
+  return res.rowCount ?? 0;
+}
+
 // Avbryter en egen beställning som är ny och högst 30 minuter gammal.
-// Status och tid kontrolleras i samma UPDATE, så att två avbrott inte kan lyckas samtidigt.
 export async function cancelOrder(orderId: number, customerId: number): Promise<Result<Order>> {
   const found = await getOrder(orderId, customerId);
   if (!found.ok) return found;
 
-  const res = await db.query(
-    `UPDATE orders SET status = 'cancelled'
-      WHERE id = $1 AND status = 'new' AND created_at >= now() - interval '30 minutes'
-      RETURNING id`,
-    [orderId],
-  );
-  if (res.rowCount === 0) {
-    return err("conflict", "Beställningen kan inte avbrytas.");
+  const updated = await markCancelled(orderId, customerId);
+  if (updated === 0) {
+    // Ingen rad uppdaterades: antingen har statusen ändrats, eller så är beställningen för gammal.
+    if (found.value.status !== "new") {
+      return err(
+        "conflict",
+        `Beställningen har status ${found.value.status} och kan inte avbrytas.`,
+      );
+    }
+    return err("conflict", "Beställningen är äldre än 30 minuter och kan inte avbrytas.");
   }
   return getOrder(orderId, customerId);
 }

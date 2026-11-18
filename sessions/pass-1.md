@@ -9,7 +9,7 @@ Story 2: en kund ska kunna avbryta en beställning inom 30 minuter efter att den
 - Riggen: `CLAUDE.md`, `.claude/settings.json` (behörigheter) och skillen `/tdd`.
 - Plan i `docs/plan.md` med acceptanskriterier, antaganden och steg.
 - `cancelOrder` i `src/services/orderService.ts` och routen `POST /orders/:id/cancel` i `src/routes/orders.ts`. Statuskontroll och tidskontroll görs i samma UPDATE.
-- 23 tester i `tests/orders.test.ts`, som täcker acceptanskriterium 1–6 (400 och 401 som egna fall).
+- 16 tester i `tests/orders.test.ts` (23 tester totalt i projektet, varav 7 i `tests/customers.test.ts`), som täcker acceptanskriterium 1–6 (400 och 401 som egna fall).
 - Dokumentation: `docs/api.md` (endpointet och svarskoder), testantalet i `CLAUDE.md` och `README.md`.
 
 ## Bevis

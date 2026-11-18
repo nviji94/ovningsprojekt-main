@@ -8,7 +8,7 @@ Instruktioner för Claude Code i det här repot. Läs också docs/standard.md in
 - Svara på svenska i kommentarer och dokumentation. Kod, namn och commits följer docs/standard.md.
 
 ## Kommandon
-- Test: `npm test` (23 tester, mot butik_test). Python-tester: `npm run test:legacy`.
+- Test: `npm test` (29 tester, mot butik_test). Python-tester: `npm run test:legacy`.
 - Typkontroll: `npm run typecheck`. Lint: `npm run lint`. Format: `npm run format:check`.
 - Databas: `npm run db:up` startar Docker. `npm run db:reset` återställer schema och testdata.
 - Kör alltid `npm test` efter en kodändring och visa resultatet.

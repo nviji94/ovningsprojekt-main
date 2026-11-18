@@ -17,7 +17,7 @@ pip install -r requirements.txt     # gärna i en virtuell miljö
 cp .env.example .env
 npm run db:up                       # startar PostgreSQL i Docker
 npm run db:reset                    # skapar tabeller och testdata
-npm test                            # ska ge 23 gröna tester
+npm test                            # ska ge 29 gröna tester
 npm start                           # API:t på http://localhost:3000
 ```
 

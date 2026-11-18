@@ -38,7 +38,7 @@ Ingen ändring av databasschemat behövs.
 6. **Ogiltig begäran**
    - Givet en begäran utan headern `X-Customer-Id`, eller med ett id som inte är ett positivt heltal
    - När begäran skickas till `POST /orders/:id/cancel`
-   - Så svarar API:t 401 respektive 400 med felkoden `invalid_input`, och ingen beställning ändras.
+   - Så svarar API:t 401 med felkoden `unauthorized` om headern saknas, och 400 med felkoden `invalid_input` om id:t inte är ett positivt heltal. Autentiseringen kontrolleras först och därefter valideras id:t. Ingen beställning ändras.
 
 ## Antaganden
 
@@ -48,11 +48,11 @@ Dessa är antaganden och ska bekräftas innan koden skrivs.
 - **Antagande 2: databasens klocka gäller.** Tidskontrollen använder `now()` i PostgreSQL, inte `Date.now()` i appen, så att klockorna inte kan skilja sig åt.
 - **Antagande 3: gränsen är exakt 30 minuter.** En beställning som är högst 30 minuter gammal går att avbryta. Villkoret blir `created_at >= now() - interval '30 minutes'`.
 - **Antagande 4: kontrollen är atomär.** Statuskontrollen och tidskontrollen görs i samma `UPDATE ... WHERE ... RETURNING`, så att två samtidiga avbrott inte båda kan lyckas.
-- **Antagande 5: ordningen på felen.** 400 för ogiltigt id, 401 utan inloggning, 404 om beställningen inte finns, 403 om den tillhör en annan kund och därefter 409. Ägarkontrollen återanvänder `getOrder` i `src/services/orderService.ts`.
+- **Antagande 5: ordningen på felen.** Autentiseringen kontrolleras först: 401 `unauthorized` utan `X-Customer-Id`. Därefter valideras id:t: 400 `invalid_input` om det inte är ett positivt heltal. Sedan 404 om beställningen inte finns, 403 om den tillhör en annan kund och därefter 409. Ägarkontrollen återanvänder `getOrder` i `src/services/orderService.ts`.
 - **Antagande 6: alla 409-fall använder felkoden `conflict`.** Skillnaden mellan "för sent" och "fel status" syns bara i `message`. Ingen ny felkod behövs i `src/result.ts`.
 - **Antagande 7: svaret är hela beställningen.** Svaret har samma form som `GET /orders/:id`.
 - **Antagande 8: metod och sökväg.** `POST /orders/:id/cancel`, eftersom raden finns kvar och bara ändrar status.
-- **Antagande 9: testdata för tid.** Alla beställningar i `db/seed.sql` har fasta datum i oktober 2026 och är därför äldre än 30 minuter. Lyckat avbrott testas med en beställning som skapas via `POST /orders` i testet. "För sent" testas genom att sätta `created_at` bakåt direkt i testdatabasen.
+- **Antagande 9: testdata för tid.** Alla beställningar i `db/seed.sql` är äldre än 30 minuter, eftersom de har fasta datum i augusti–oktober 2026. Lyckat avbrott testas med en beställning som skapas via `POST /orders` i testet. "För sent" testas genom att sätta `created_at` bakåt direkt i testdatabasen.
 - **Antagande 10: pris och nattrapport.** `GET /orders/:id/price` och `jobs/nightly_report.py` hanterar avbrutna beställningar som i dag. Det är inte undersökt om rapporten bör utesluta dem, och det hör inte till den här planen.
 
 ## Steg
@@ -60,12 +60,12 @@ Dessa är antaganden och ska bekräftas innan koden skrivs.
 Ett steg i taget. Kör `npm test` efter varje kodändring och visa resultatet.
 
 1. Bekräfta antagandena ovan, särskilt 1 och 3.
-2. Skriv testerna först, i `tests/orders.test.ts`, ett per acceptanskriterium (sex tester, med 400 och 401 som egna fall). Kör `npm test` och kontrollera att de nya testerna är röda av rätt skäl.
+2. Skriv testerna först, i `tests/orders.test.ts`, ett per acceptanskriterium (13 nya tester i `tests/orders.test.ts`, med 400 och 401 som egna fall). Kör `npm test` och kontrollera att de nya testerna är röda av rätt skäl.
 3. Lägg till `cancelOrder(orderId, customerId)` i `src/services/orderService.ts`. Funktionen returnerar `Result`, kastar inte fel för förväntade fall, och använder parametriserad SQL. Återanvänd `getOrder` för 404 och 403.
 4. Lägg till routen `POST /orders/:id/cancel` i `src/routes/orders.ts` med `requireCustomer`, `parseId` och `sendResult`. Kunden hämtas från `req.customerId`.
 5. Kör `npm test`. Alla tester ska vara gröna, och inget befintligt test får tas bort eller hoppas över.
 6. Kör `npm run typecheck`, `npm run lint` och `npm run format:check`.
-7. Uppdatera `docs/api.md` med en ny rad för endpointet. Uppdatera antalet tester i `CLAUDE.md` och `README.md` (nu 16).
+7. Uppdatera `docs/api.md` med en ny rad för endpointet. Uppdatera antalet tester i `CLAUDE.md` och `README.md` (nu 29).
 8. Skriv en sessionslogg i `sessions/`.
 9. Committa först när det har begärts.
 
