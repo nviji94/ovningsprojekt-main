@@ -11,6 +11,18 @@ Alla anrop utom `POST /customers` och `/health` kräver headern `X-Customer-Id` 
 | `POST /orders` | Lägg en beställning. Body: `{ lines: [{ product, quantity, unitPrice }], discountCode? }`. | 201, 400, 401 |
 | `GET /orders/:id` | En egen beställning med rader. | 200, 400, 401, 403, 404 |
 | `GET /orders/:id/price` | Pris för en egen beställning: `{ net, vat, total }`. Räknas av den äldre modulen. | 200, 400, 401, 403, 404 |
+| `POST /orders/:id/cancel` | Avbryt en egen beställning som är ny och högst 30 minuter gammal. Svaret är beställningen med status `cancelled`. | 200, 400, 401, 403, 404, 409 |
+
+### `POST /orders/:id/cancel`
+
+Syfte: kunden ska kunna avbryta en beställning inom 30 minuter efter att den lagts. Tidskontrollen görs mot `created_at` i databasen. Bara beställningar med status `new` kan avbrytas.
+
+- **200**: beställningen avbröts. Svaret har samma form som `GET /orders/:id`, med `status: "cancelled"`.
+- **400** (`invalid_input`): `:id` är inte ett positivt heltal.
+- **401** (`unauthorized`): headern `X-Customer-Id` saknas eller är ogiltig.
+- **403** (`forbidden`): beställningen tillhör en annan kund. Beställningen är oförändrad.
+- **404** (`not_found`): beställningen finns inte.
+- **409** (`conflict`): beställningen är äldre än 30 minuter, eller har en annan status än `new`. Statusen är oförändrad.
 
 ## Den äldre modulen
 

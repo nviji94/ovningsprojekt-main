@@ -81,3 +81,21 @@ export async function getOrder(orderId: number, customerId: number): Promise<Res
   );
   return ok({ ...order, lines: lines.rows });
 }
+
+// Avbryter en egen beställning som är ny och högst 30 minuter gammal.
+// Status och tid kontrolleras i samma UPDATE, så att två avbrott inte kan lyckas samtidigt.
+export async function cancelOrder(orderId: number, customerId: number): Promise<Result<Order>> {
+  const found = await getOrder(orderId, customerId);
+  if (!found.ok) return found;
+
+  const res = await db.query(
+    `UPDATE orders SET status = 'cancelled'
+      WHERE id = $1 AND status = 'new' AND created_at >= now() - interval '30 minutes'
+      RETURNING id`,
+    [orderId],
+  );
+  if (res.rowCount === 0) {
+    return err("conflict", "Beställningen kan inte avbrytas.");
+  }
+  return getOrder(orderId, customerId);
+}
