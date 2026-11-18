@@ -21,5 +21,40 @@
       "Bash(git push *)",
       "Bash(rm *)"
     ]
-  }
+  },
+  "hooks": {
+  "PostToolUse": [{
+    "matcher": "Edit|Write",
+    "hooks": [{
+      "type": "command",
+      "command":
+        "node .claude/hooks/format-typkoll-lint.mjs"
+    },
+    {
+      "type": "command",
+      "command": "node .claude/hooks/block-console-log.mjs"
+    }]
+  }],
+  "SessionStart": [{
+  "hooks": [{
+    "type": "command",
+    "command":
+      "node .claude/hooks/las-logg.mjs"
+  }]
+}],
+"SessionEnd": [{
+  "hooks": [{
+    "type": "command",
+    "command":
+      "node .claude/hooks/skriv-logg.mjs"
+  }]
+}],
+"PreToolUse": [{
+  "matcher": "Edit|Write",
+  "hooks": [{
+    "type": "command",
+    "command": "node .claude/hooks/skydda-env.mjs"
+  }]
+}]
+}
 }
